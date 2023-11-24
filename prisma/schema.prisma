@@ -1,0 +1,744 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mongodb"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("ShadowDataBaseUrl")
+}
+
+model Controls {
+  id          String        @id @default(uuid()) @map("_id")
+  title       String        @unique
+  route       String?
+  Permissions Permissions[]
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+}
+
+model Permissions {
+  id          String      @id @default(uuid()) @map("_id")
+  title       String?
+  control     Controls    @relation(fields: [controlId], references: [id], onDelete: Cascade)
+  controlId   String
+  moderator   Credentails @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+  moderatorId String
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+}
+
+model Credentails {
+  id          String        @id @default(uuid()) @map("_id")
+  email       String        @unique
+  phoneNumber String?
+  password    String
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  role        Role?         @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId      String?
+  permissions Permissions[]
+}
+
+model User {
+  id                    String                  @id @default(uuid()) @map("_id")
+  profileImage          String?
+  coverImage            String?
+  username              String?
+  discordlink           String?
+  twitterlink           String?
+  isActive              Boolean                 @default(true)
+  block                 Boolean                 @default(false)
+  spendingAmount        Int?
+  refreshToken          String?
+  created_at            DateTime                @default(now())
+  updated_at            DateTime                @updatedAt
+  wallets               Wallet[]
+  userbadge             UserBadges[]
+  calendarVote          CalendarVote[]
+  calendar              Calendar[]
+  watchList             WatchList[]
+  wishList              WishList[]
+  role                  Role?                   @relation(fields: [roleId], references: [id])
+  roleId                String?
+  launchpadProject      launchPadProject[]
+  Subscription          Subscription?
+  calendarlikes         CalendarLikes[]
+  marketplaceCollection marketplaceCollection[]
+  marketplaceFeatured   marketplaceFeatured?
+}
+
+model WatchList {
+  id                      String                 @id @default(uuid()) @map("_id")
+  created_at              DateTime               @default(now())
+  updated_at              DateTime               @updatedAt
+  User                    User                   @relation(fields: [userId], references: [id])
+  userId                  String
+  marketplaceCollection   marketplaceCollection? @relation(fields: [marketplaceCollectionId], references: [id])
+  marketplaceCollectionId String?
+}
+
+model WishList {
+  id                      String          @id @default(uuid()) @map("_id")
+  created_at              DateTime        @default(now())
+  updated_at              DateTime        @updatedAt
+  marketplaceCollectionId String
+  User                    User            @relation(fields: [userId], references: [id])
+  userId                  String
+  marketplaceNft          marketplaceNft? @relation(fields: [marketplaceNftId], references: [id])
+  marketplaceNftId        String?
+}
+
+model Role {
+  id          String        @id @default(uuid()) @map("_id")
+  name        String        @unique
+  active      Boolean       @default(true)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  user        User[]
+  credentails Credentails[]
+}
+
+model UserBadges {
+  id         String   @id @default(uuid()) @map("_id")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  User       User     @relation(fields: [userId], references: [id])
+  userId     String
+  Badges     Badges   @relation(fields: [badgesId], references: [id], onDelete: Cascade)
+  badgesId   String
+}
+
+model Badges {
+  id         String       @id @default(uuid()) @map("_id")
+  name       String       @unique
+  active     Boolean      @default(true)
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+  userbadge  UserBadges[]
+  level      Level[]
+}
+
+model Level {
+  id          String   @id @default(uuid()) @map("_id")
+  levelName   String
+  description String?
+  levelStart  Int
+  levelEnd    Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  Badges      Badges   @relation(fields: [badgesId], references: [id], onDelete: Cascade)
+  badgesId    String
+}
+
+model attribute {
+  id         String   @id @default(uuid()) @map("_id")
+  color      String
+  startValue Int
+  endValue   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Wallet {
+  id                 String               @id @default(uuid()) @map("_id")
+  walletAddress      String               @unique
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+  user               User                 @relation(fields: [userId], references: [id])
+  userId             String
+  // wallettype         WalletType           @relation(fields: [walletypeid], references: [id])
+  // walletypeid        String            
+  marketplaceOffer   marketplaceOffer[]
+  marketplaceOrder   marketplaceOrder[]
+  marketplaceAuction marketplaceAuction[]
+  marketplaceBidding marketplaceBidding[]
+  WalletType         WalletType?          @relation(fields: [walletTypeId], references: [id])
+  walletTypeId       String?
+}
+
+model WalletType {
+  id         String   @id @default(uuid()) @map("_id")
+  walletType String   @unique()
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  Wallet     Wallet[]
+}
+
+model Calendar {
+  id               String                @id @default(uuid()) @map("_id")
+  //set title unique and migrate its not done yet
+  title            String                @unique
+  profileImage     String                @default("http://localhost:3001/profileImages/banner.jpeg")
+  bannerImage      String                @default("http://localhost:3001/profileImages/banner.jpeg")
+  calendarGif      String                @default("https://openseauserdata.com/files/b4603c7c69c40401efded3f13f5540f0.gif")
+  description      String?
+  category         String?
+  status           String?               @default("pending")
+  launchDate       String?
+  overview         String?
+  featured         Boolean?              @default(false)
+  verifields       Boolean?              @default(false)
+  totalSupply      Int                   @default(1000)
+  created_at       DateTime              @default(now())
+  updated_at       DateTime              @updatedAt
+  user             User                  @relation(fields: [userId], references: [id])
+  userId           String
+  saletype         SaleType[]
+  vote             CalendarVote[]
+  tags             Tags[]
+  team             Team[]
+  roadMap          RoadMap[]
+  artGallery       ArtGallery[]
+  socialLinks      CalendarSocialLinks[]
+  faq              CalendarFAQ[]
+  calendarlikes    CalendarLikes[]
+  feebacks         CalendarFeedback[]
+  blockchainType   BlockchainType        @relation(fields: [blockchainTypeId], references: [id])
+  blockchainTypeId String
+}
+
+model CalendarLikes {
+  id         String   @id @default(uuid()) @map("_id")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  Calendar   Calendar @relation(fields: [calendarId], references: [id])
+  calendarId String
+  User       User     @relation(fields: [userId], references: [id])
+  userId     String
+}
+
+model CalendarFeedback {
+  id                String    @id @default(uuid()) @map("_id")
+  feedback_username String
+  feedback_email    String
+  feedback_content  String
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  Calendar          Calendar? @relation(fields: [calendarId], references: [id])
+  calendarId        String?
+}
+
+model SaleType {
+  id                 String            @id @default(uuid()) @map("_id")
+  type               String
+  starttime          DateTime?
+  endTime            DateTime?
+  price              Float?
+  active             Boolean           @default(true)
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
+  calendar           Calendar?         @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  calendarId         String?
+  launchPadProject   launchPadProject? @relation(fields: [launchPadProjectId], references: [id])
+  launchPadProjectId String?
+}
+
+model CalendarVote {
+  id         String   @id @default(uuid()) @map("_id")
+  calendar   Calendar @relation(fields: [calendarId], references: [id])
+  calendarId String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Tags {
+  id         String   @id @default(uuid()) @map("_id")
+  name       String
+  calendar   Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  calendarId String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Team {
+  id           String   @id @default(uuid()) @map("_id")
+  name         String
+  role         String
+  description  String?
+  profileImage String?
+  profileLink  String?
+  discordLink  String?
+  LinkedIn     String?
+  twitter      String?
+  calendar     Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  calendarId   String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+}
+
+model RoadMap {
+  id          String    @id @default(uuid()) @map("_id")
+  title       String
+  description String
+  releaseDate DateTime?
+  progress    Float?
+  active      Boolean   @default(true)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  calendar    Calendar  @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  calendarId  String
+}
+
+model ArtGallery {
+  id         String   @id @default(uuid()) @map("_id")
+  path       String
+  isactive   Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  calendar   Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  calendarId String
+}
+
+model CalendarSocialLinks {
+  id         String    @id @default(uuid()) @map("_id")
+  website    String
+  discord    String
+  twitter    String
+  etherscan  String
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  calendar   Calendar? @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  calendarId String?
+}
+
+model CalendarFAQ {
+  id         String   @id @default(uuid()) @map("_id")
+  question   String
+  answer     String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  calendar   Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  calendarId String
+}
+
+// +==================================== launchpad
+
+model launchPadProject {
+  id                        String                     @id @default(uuid()) @map("_id")
+  name                      String
+  description               String?
+  preSaleContractAddress    String?
+  publicSaleContractAddress String?
+  nftquantity               Int
+  ipfsUrlmetadata           String?
+  ipfsUrlImage              String?
+  walletAddress             String
+  type                      String
+  twitterLink               String
+  discordLink               String
+  profileImage              String
+  bannerImage               String
+  solanaContractAddress     String?
+  // new fields
+  dimensions                String?
+  generatedPath             String?
+  isActive                  Boolean                    @default(true)
+  isfeatured                Boolean                    @default(false)
+  //
+  created_at                DateTime                   @default(now())
+  updated_at                DateTime                   @updatedAt
+  contractType              ContractType?
+  User                      User                       @relation(fields: [userId], references: [id])
+  userId                    String
+  SaleType                  SaleType[]
+  marketplaceNft            marketplaceNft[]
+  BlockchainType            BlockchainType             @relation(fields: [blockchainTypeId], references: [id])
+  blockchainTypeId          String
+  marketplacTraitsOrValues  marketplacTraitsOrValues[]
+}
+
+model marketplacTraitsOrValues {
+  id                 String            @id @default(uuid()) @map("_id")
+  traitWithValues    String
+  onlyTrait          String
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
+  launchpadProject   launchPadProject? @relation(fields: [launchpadProjectId], references: [id])
+  launchpadProjectId String?
+}
+
+model BlockchainType {
+  id               String             @id @default(uuid()) @map("_id")
+  blockChainName   String             @unique
+  blockChainIcon   String             @default("")
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @updatedAt
+  Calendar         Calendar[]
+  launchPadProject launchPadProject[]
+}
+
+enum ContractType {
+  preSale
+  publicSale
+}
+
+// admin blog models
+
+model BlogPost {
+  id          String   @id @default(uuid()) @map("_id")
+  category    String
+  title       String
+  imageUrl    String
+  isPublish   Boolean  @default(false)
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
+// settings
+model SettingFAQs {
+  id                String          @id @default(uuid()) @map("_id")
+  title             String
+  description       String
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+  SettingCategory   SettingCategory @relation(fields: [settingCategoryId], references: [id], onDelete: Cascade)
+  settingCategoryId String
+}
+
+model SettingCategory {
+  id           String        @id @default(uuid()) @map("_id")
+  categoryName String
+  description  String
+  FAQs         SettingFAQs[]
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+}
+
+model SettingTicket {
+  id                  String            @id @default(uuid()) @map("_id")
+  title               String
+  description         String
+  ticketImage         String?
+  email               String
+  SettingTicketType   SettingTicketType @relation(fields: [SettingTicketTypeId], references: [id])
+  SettingTicketTypeId String            @unique
+  created_at          DateTime          @default(now())
+  updated_at          DateTime          @updatedAt
+}
+
+model SettingTicketType {
+  id          String         @id @default(uuid()) @map("_id")
+  ticketName  String
+  description String
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+  ticketType  SettingTicket?
+}
+
+model Subscription {
+  id           String   @id @default(uuid()) @map("_id")
+  subscription Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  User         User     @relation(fields: [userId], references: [id])
+  userId       String   @unique
+}
+
+// help center 
+
+model HeplCenterOption {
+  id         String               @id @default(uuid()) @map("_id")
+  name       String
+  parentId   String?
+  FormField  HelpCenterField[]
+  Dropdowns  HelpCenterDropDown[] @relation("dropdowns")
+  created_at DateTime             @default(now())
+  updated_at DateTime             @updatedAt
+
+  HeplCenterOption   HelpCenterDropDown? @relation("options", fields: [heplCenterOptionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  heplCenterOptionId String?
+}
+
+model HelpCenterField {
+  id                 String           @id @default(uuid()) @map("_id")
+  created_at         DateTime         @default(now())
+  FiledName          String
+  updated_at         DateTime         @updatedAt
+  HeplCenterOption   HeplCenterOption @relation(fields: [heplCenterOptionId], references: [id], onDelete: Cascade)
+  heplCenterOptionId String
+}
+
+model HelpCenterDropDown {
+  id                 String             @id @default(uuid()) @map("_id")
+  dropdownName       String
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @updatedAt
+  options            HeplCenterOption[] @relation("options")
+  HeplCenterOption   HeplCenterOption?  @relation("dropdowns", fields: [heplCenterOptionId], references: [id], onDelete: Cascade)
+  heplCenterOptionId String?
+}
+
+// __________________________________________________ Setting ___________________________________- 
+
+model themeSettingcolor {
+  id         String   @id @default(uuid()) @map("_id")
+  theme      String?
+  type       String?
+  color      String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model themeSettingButton {
+  id              String   @id @default(uuid()) @map("_id")
+  theme           String?
+  type            String?
+  fontSize        String?
+  fontStyle       String?
+  color           String?
+  backgroundColor String?
+  margin          String?
+  padding         String?
+  borderRadius    String?
+  shadow          String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+model themeSettingFont {
+  id         String   @id @default(uuid()) @map("_id")
+  h1         String?
+  h2         String?
+  h3         String?
+  h4         String?
+  h5         String?
+  h6         String?
+  p          String?
+  span       String?
+  googleFont String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model toolSetting {
+  id         String   @id @default(uuid()) @map("_id")
+  toolName   String?
+  status     Boolean?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model siteSetting {
+  id          String   @id @default(uuid()) @map("_id")
+  logo        String?
+  banner      String?
+  keywords    String?
+  description String?
+  title       String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
+// ____________________________________________ MARKETPLACE PRISMA ______________________________________________________
+model metadataRanking {
+  id              String @id @default(uuid()) @map("_id")
+  data            String
+  name            String
+  imgUrl          String
+  totalSupply     String
+  contractAddress String
+}
+
+model marketplaceCollection {
+  id                  String                @id @default(uuid()) @map("_id")
+  name                String
+  description         String
+  contractAddress     String                @unique
+  blockchain          String?
+  projectType         String
+  contractType        String?
+  isActive            Boolean               @default(true)
+  bannerImage         String?
+  ProfileImage        String?
+  websiteUrl          String?
+  discordUrl          String?
+  twitterUrl          String?
+  etherscanUrl        String?
+  // sol entities
+  collectionAddress   String?
+  SFBP                Int?
+  symbol              String?
+  externalUrl         String?
+  //end
+  quantity            Int?
+  Royalty             Int                   @default(80)
+  totalSupply         Int                   @default(1000)
+  isfeatured          Boolean               @default(false)
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @updatedAt
+  UserCollection      User                  @relation(fields: [UserId], references: [id], onDelete: Cascade)
+  UserId              String
+  marketplaceNft      marketplaceNft[]
+  marketplaceContract marketplaceContract[]
+  marketplaceOffer    marketplaceOffer[]
+  marketplaceOrder    marketplaceOrder[]
+  marketplaceFeatured marketplaceFeatured?
+  watchList           WatchList[]
+}
+
+model marketplaceFeatured {
+  id                         String                @id @default(uuid()) @map("_id")
+  startTime                  DateTime
+  endTime                    DateTime
+  marketplaceCollection      marketplaceCollection @relation(fields: [marketplacecontractAddress], references: [contractAddress])
+  marketplacecontractAddress String                @unique
+
+  marketplaceFeaturedPlan   marketplaceFeaturedPlan @relation(fields: [marketplaceFeaturedPlanId], references: [id])
+  marketplaceFeaturedPlanId String                  @unique
+
+  userfeatured User   @relation(fields: [userid], references: [id])
+  userid       String @unique
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model marketplaceFeaturedPlan {
+  id                  String               @id @default(uuid()) @map("_id")
+  name                String
+  price               Float
+  day                 String
+  marketplaceFeatured marketplaceFeatured?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model marketplaceNft {
+  id          String  @id @default(uuid()) @map("_id")
+  name        String
+  img         String
+  description String?
+  score       Float?
+  symbol      String?
+  mintAddress String?
+  imgTokenId  Int
+  rank        Int?
+
+  marketplaceCollection   marketplaceCollection?  @relation(fields: [marketplaceCollectionId], references: [id], onDelete: Cascade)
+  marketplaceCollectionId String?
+  marketplaceAttributes   marketplaceAttributes[]
+  marketplaceOffer        marketplaceOffer[]
+  marketplaceAuction      marketplaceAuction[]
+
+  marketplaceorder   marketplaceOrder[]
+  wishList           WishList[]
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @updatedAt
+  launchpadProject   launchPadProject?  @relation(fields: [launchpadProjectId], references: [id])
+  launchpadProjectId String?
+}
+
+model marketplaceAttributes {
+  id               String         @id @default(uuid()) @map("_id")
+  trait_type       String
+  value            String
+  marketplaceNft   marketplaceNft @relation(fields: [marketplaceNftId], references: [id], onDelete: Cascade)
+  marketplaceNftId String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model marketplaceContract {
+  id                      String                @id @default(uuid()) @map("_id")
+  name                    String
+  symbol                  String
+  contractAddress         String
+  contractType            String
+  marketplaceCollection   marketplaceCollection @relation(fields: [marketplaceCollectionId], references: [contractAddress])
+  marketplaceCollectionId String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model marketplaceOffer {
+  id String @id @default(uuid()) @map("_id")
+
+  time          String   @unique
+  amount        String
+  coinAddress   String?
+  offerAccepted Boolean  @default(false)
+  isactive      Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  marketplaceCollection   marketplaceCollection @relation(fields: [marketplaceCollectionId], references: [contractAddress])
+  marketplaceCollectionId String
+
+  marketplaceNft   marketplaceNft @relation(fields: [marketplaceNftId], references: [id])
+  marketplaceNftId String
+  Wallet           Wallet         @relation(fields: [walletAddress], references: [walletAddress])
+  walletAddress    String
+}
+
+model marketplaceOrder {
+  id                      String                @id @default(uuid()) @map("_id")
+  tokenId                 String
+  ethPrice                String?
+  tokenPrice              String?
+  createdTime             String
+  tokenAddress            String
+  coinAddress             String?
+  tokenAmount             String
+  signature               String
+  transactionHash         String
+  isactive                Boolean               @default(true)
+  created_at              DateTime              @default(now())
+  updated_at              DateTime              @updatedAt
+  marketplaceCollection   marketplaceCollection @relation(fields: [marketplaceCollectionId], references: [contractAddress])
+  marketplaceCollectionId String
+  wallets                 Wallet                @relation(fields: [walletAddress], references: [walletAddress])
+  walletAddress           String
+  marketplacenft          marketplaceNft        @relation(fields: [marketplaceNftId], references: [id])
+  marketplaceNftId        String
+}
+
+model marketplaceAuction {
+  id                 String               @id @default(uuid()) @map("_id")
+  tokenId            Int
+  minBid             String
+  signature          String
+  tokenAddress       String
+  tokenAmount        String
+  createdTime        String
+  expiryTime         String
+  coinAddress        String?
+  isactive           Boolean              @default(true)
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+  marketplaceBidding marketplaceBidding[]
+
+  marketplaceNft   marketplaceNft @relation(fields: [marketplaceNftId], references: [id])
+  marketplaceNftId String
+  Wallet           Wallet         @relation(fields: [walletAddress], references: [walletAddress])
+  walletAddress    String
+}
+
+model marketplaceBidding {
+  id            String   @id @default(uuid()) @map("_id")
+  highestBid    String   @unique
+  highestBidder String
+  coinAddress   String?
+  BidType       BidType?
+  bidAccepted   Boolean  @default(false)
+  isactive      Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  marketplaceAuction   marketplaceAuction @relation(fields: [marketPlaceAuctionId], references: [id])
+  marketPlaceAuctionId String
+
+  Wallet        Wallet @relation(fields: [walletAddress], references: [walletAddress])
+  walletAddress String
+}
+
+enum BidType {
+  ByEth
+  ByToken
+}
