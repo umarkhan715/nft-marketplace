@@ -48,7 +48,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("marketplace", app, document);
 
-  ///
+  /// cors policy
   app.enableCors();
   app.use(bodyParser.json({ limit: "1000gb", extended: true }));
   app.use(bodyParser.urlencoded({ limit: "1000gb", extended: true }));
